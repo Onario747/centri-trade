@@ -90,7 +90,6 @@ const FeaturesSection: React.FC = () => {
 
   return (
     <section className="max-container padding-x py-20 relative">
-      {/* Background Elements */}
       <div className="absolute top-[20%] right-[10%] w-[300px] h-[300px] rounded-full bg-blue-500/5 blur-[100px] z-0"></div>
       <div className="absolute bottom-[20%] left-[10%] w-[250px] h-[250px] rounded-full bg-purple-500/5 blur-[100px] z-0"></div>
 

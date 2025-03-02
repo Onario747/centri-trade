@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useWallet } from "../../contexts/WalletContext";
 import { useJupiter } from "@jup-ag/react-hook";
 import { PublicKey } from "@solana/web3.js";
-import { useConnection } from "@solana/wallet-adapter-react";
 import JSBI from "jsbi";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import { useWallet } from "../../contexts/WalletContext";
 
 // Updated RouteInfo interface with all required properties
 interface RouteInfo {
@@ -18,6 +17,7 @@ interface RouteInfo {
   slippageBps: number;
   swapMode: number;
   priceImpactPct: number;
+  amount: JSBI;
 }
 
 interface OrderFormProps {
@@ -46,9 +46,61 @@ const TOKEN_DECIMALS: Record<string, number> = {
   BONK: 5,
 };
 
+// Add this mock data near your token constants
+const MOCK_ROUTES = {
+  "SOL/USDC": [
+    {
+      marketInfos: [{ amm: { label: "Orca" } }, { amm: { label: "Raydium" } }],
+      inAmount: JSBI.BigInt(1000000000), // 1 SOL in lamports
+      outAmount: JSBI.BigInt(30500000), // $30.50 USDC
+      otherAmountThreshold: JSBI.BigInt(0),
+      slippageBps: 50,
+      swapMode: 1,
+      priceImpactPct: 0.12,
+      amount: JSBI.BigInt(1000000000), // Add this line - same as inAmount
+    },
+  ],
+  "BTC/USDC": [
+    {
+      marketInfos: [
+        { amm: { label: "Jupiter" } },
+        { amm: { label: "Raydium" } },
+      ],
+      inAmount: JSBI.BigInt(100000000), // 1 BTC (8 decimals)
+      outAmount: JSBI.BigInt(64500000000), // $64,500 USDC
+      otherAmountThreshold: JSBI.BigInt(0),
+      slippageBps: 50,
+      swapMode: 1,
+      priceImpactPct: 0.05,
+      amount: JSBI.BigInt(100000000), // Add this line - same as inAmount
+    },
+  ],
+  "ETH/USDC": [
+    {
+      marketInfos: [{ amm: { label: "Raydium" } }],
+      inAmount: JSBI.BigInt(100000000), // 1 ETH (8 decimals)
+      outAmount: JSBI.BigInt(3200000000), // $3,200 USDC
+      otherAmountThreshold: JSBI.BigInt(0),
+      slippageBps: 50,
+      swapMode: 1,
+      priceImpactPct: 0.08,
+    },
+  ],
+  "BONK/SOL": [
+    {
+      marketInfos: [{ amm: { label: "Orca" } }, { amm: { label: "Meteora" } }],
+      inAmount: JSBI.BigInt(10000000), // 100 BONK (5 decimals)
+      outAmount: JSBI.BigInt(120000), // 0.00012 SOL
+      otherAmountThreshold: JSBI.BigInt(0),
+      slippageBps: 50,
+      swapMode: 1,
+      priceImpactPct: 0.25,
+    },
+  ],
+};
+
 const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
   const { connected, publicKey, balance } = useWallet();
-  const { connection } = useConnection();
   const [orderType, setOrderType] = useState<
     "market" | "limit" | "stop" | "take_profit"
   >("market");
@@ -61,23 +113,21 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
   const [success, setSuccess] = useState<string | null>(null);
   const [amountError, setAmountError] = useState<string | null>(null);
   const [slippageError, setSlippageError] = useState<string | null>(null);
+  const [useMockData, setUseMockData] = useState(false);
+  const mockSwapExecuted = useRef(false);
 
-  // Available trading pairs
   const availablePairs = [
     { from: "SOL", to: "USDC" },
     { from: "BTC", to: "USDC" },
     { from: "ETH", to: "USDC" },
     { from: "BONK", to: "SOL" },
   ];
-
-  // Convert amount based on token decimals
   const getAmountInLamports = useCallback(() => {
     if (!amount || isNaN(parseFloat(amount))) return JSBI.BigInt(0);
     const decimals = TOKEN_DECIMALS[pair.from] || 9;
     return JSBI.BigInt(Math.floor(parseFloat(amount) * 10 ** decimals));
   }, [amount, pair.from]);
 
-  // Jupiter integration
   const {
     exchange,
     loading: jupiterLoading,
@@ -92,7 +142,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
     debounceTime: 250,
   });
 
-  // Validate amount input
   useEffect(() => {
     setAmountError(null);
 
@@ -117,7 +166,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
     }
   }, [amount, balance, pair.from]);
 
-  // Validate slippage input
   useEffect(() => {
     setSlippageError(null);
 
@@ -140,32 +188,29 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
     }
   }, [slippage]);
 
-  // Update routes when exchange data changes
   useEffect(() => {
-    if (jupiterRoutes && jupiterRoutes.length > 0) {
-      setRoutes(jupiterRoutes as RouteInfo[]);
-      setSelectedRoute(jupiterRoutes[0] as RouteInfo);
-    } else {
-      setRoutes([]);
-      setSelectedRoute(null);
-    }
+    if (useMockData) {
+      const pairKey = `${pair.from}/${pair.to}`;
+      const mockRouteData = MOCK_ROUTES[pairKey] || [];
 
-    // Clear any Jupiter errors
-    if (jupiterError) {
-      setError(`Jupiter error: ${jupiterError}`);
-    } else {
-      setError(null);
-    }
-  }, [jupiterRoutes, jupiterError]);
+      const routesWithAmount = mockRouteData.map((route) => ({
+        ...route,
+        amount: route.inAmount,
+      }));
 
-  // Handle pair change
+      setRoutes(routesWithAmount);
+      setSelectedRoute(routesWithAmount[0] || null);
+    } else if (jupiterRoutes) {
+      setRoutes(jupiterRoutes);
+      setSelectedRoute(jupiterRoutes[0] || null);
+    }
+  }, [jupiterRoutes, pair.from, pair.to, useMockData]);
+
   const handlePairChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const [from, to] = e.target.value.split("/");
     if (onPairChange) {
       onPairChange({ from, to });
     }
-
-    // Reset form when pair changes
     setAmount("");
     setError(null);
     setSuccess(null);
@@ -175,14 +220,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
     if (typeof amount === "number") {
       return amount.toFixed(6);
     }
-
-    // Convert JSBI to string for display
     return JSBI.toNumber(amount).toFixed(6);
   };
-
-  // Execute the swap
   const executeSwap = async () => {
-    if (!connected || !publicKey) {
+    if (!connected && !useMockData) {
       setError("Please connect your wallet first");
       return false;
     }
@@ -193,31 +234,30 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
     }
 
     try {
-      const swapResult = await exchange({
-        routeInfo: selectedRoute as any,
-        userPublicKey: new PublicKey(publicKey!),
-      });
-
-      if ((swapResult as any).error) {
-        throw new Error((swapResult as any).error.toString());
+      if (useMockData) {
+        mockSwapExecuted.current = true;
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        return true;
+      } else {
+        const swapResult = await exchange({
+          routeInfo: selectedRoute as RouteInfo,
+          userPublicKey: new PublicKey(publicKey!),
+        });
+        if ("error" in swapResult && swapResult.error) {
+          throw new Error(swapResult.error.toString());
+        }
+        return true;
       }
-
-      return true;
     } catch (err) {
       console.error("Swap error:", err);
       throw err;
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Clear previous states
     setError(null);
     setSuccess(null);
-
-    // Validate inputs
     if (amountError || slippageError) {
       return;
     }
@@ -239,9 +279,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
 
       if (success) {
         setSuccess(`Successfully swapped ${amount} ${pair.from} to ${pair.to}`);
-        setAmount(""); // Reset amount after successful swap
-
-        // Refresh Jupiter routes after a short delay
+        setAmount("");
         setTimeout(() => {
           refresh();
         }, 2000);
@@ -256,14 +294,33 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
     }
   };
 
-  // Refresh routes
   const handleRefresh = () => {
     refresh();
+  };
+
+  const toggleMockMode = () => {
+    setUseMockData((prev) => !prev);
+    setError(null);
+    setSuccess(null);
   };
 
   return (
     <div className="bg-[#1E1E1E] p-6 rounded-xl">
       <h2 className="text-[24px] font-bold text-white mb-4">Place Order</h2>
+
+      <div className="flex justify-end mb-4">
+        <button
+          type="button"
+          onClick={toggleMockMode}
+          className={`px-3 py-1 rounded-md text-sm ${
+            useMockData
+              ? "bg-purple-600 text-white"
+              : "bg-gray-700 text-gray-300"
+          }`}
+        >
+          {useMockData ? "Demo Mode: ON" : "Demo Mode: OFF"}
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
@@ -431,21 +488,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
                 1 {pair.from} ≈{" "}
                 {selectedRoute?.outAmount && amount
                   ? (() => {
-                      // Create a safe calculation with proper JSBI conversion
                       const outAmount = selectedRoute.outAmount;
                       const inAmount = getAmountInLamports();
-
-                      // Only perform division if inAmount is not zero
                       if (JSBI.EQ(inAmount, JSBI.BigInt(0))) {
                         return "0";
                       }
-
-                      // Convert to numbers for display (with appropriate scaling)
                       const outNum = Number(outAmount.toString());
                       const inNum = Number(inAmount.toString());
                       const ratio = outNum / inNum;
-
-                      // Apply token decimal adjustments
                       return (
                         ratio *
                         Math.pow(
@@ -478,7 +528,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
               <span>Route:</span>
               <span className="text-white">
                 {selectedRoute?.marketInfos
-                  ?.map((info: any) => info.amm.label)
+                  ?.map((info) => info.amm.label)
                   .join(" → ")}
               </span>
             </div>

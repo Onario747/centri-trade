@@ -1,6 +1,5 @@
 import React from "react";
 
-// Mock data for order history
 const mockOrders = [
   {
     id: "1",

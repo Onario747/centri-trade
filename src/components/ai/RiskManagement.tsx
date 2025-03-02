@@ -18,10 +18,8 @@ const RiskManagement: React.FC<RiskManagementProps> = ({ recommendations }) => {
 
   const { stopLoss, takeProfit } = recommendations;
 
-  // Calculate risk-reward ratio
   const riskRewardRatio = ((takeProfit - stopLoss) / stopLoss).toFixed(2);
 
-  // Determine if the ratio is good
   const isGoodRatio = parseFloat(riskRewardRatio) >= 2;
 
   return (

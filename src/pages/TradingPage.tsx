@@ -11,8 +11,6 @@ const TradingPage: React.FC = () => {
   const { connected, balance } = useWallet();
   const [selectedPair, setSelectedPair] = useState({ from: "SOL", to: "USDC" });
   const [loading, setLoading] = useState(false);
-
-  // Simulate loading when changing pairs
   useEffect(() => {
     if (connected) {
       setLoading(true);

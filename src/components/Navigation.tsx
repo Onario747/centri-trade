@@ -25,8 +25,6 @@ const Navigation = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Handle scroll effect for navigation
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -49,13 +47,10 @@ const Navigation = () => {
       }`}
     >
       <div className="padding-x max-container flex items-center justify-between">
-        {/* Logo */}
         <div className="flex items-center gap-2">
           <img src="/assets/svg/logo.svg" alt="Logo" className="h-8 w-8" />
           <h1 className="text-white font-bold text-[24px]">CentriTrade</h1>
         </div>
-
-        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center justify-center">
           <div className="flex items-center justify-center gap-1 sm:gap-2 md:gap-4 lg:gap-6 border-[0.5px] border-[#FFFFFF]/15 px-4 py-2 rounded-full backdrop-blur-md bg-[#FFFFFF]/10">
             {navLinks.map((link) => (
@@ -73,12 +68,8 @@ const Navigation = () => {
             ))}
           </div>
         </div>
-
-        {/* Wallet Button & Mobile Menu Toggle */}
         <div className="flex items-center gap-4">
           <WalletMultiButton className="font-medium text-white cursor-pointer !bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 rounded-full" />
-
-          {/* Mobile Menu Button */}
           <button
             className="md:hidden flex flex-col justify-center items-center w-8 h-8"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -101,8 +92,6 @@ const Navigation = () => {
           </button>
         </div>
       </div>
-
-      {/* Mobile Menu */}
       <div
         className={`md:hidden absolute w-full bg-black/95 backdrop-blur-lg transition-all duration-300 overflow-hidden ${
           mobileMenuOpen ? "max-h-[300px] py-4" : "max-h-0"

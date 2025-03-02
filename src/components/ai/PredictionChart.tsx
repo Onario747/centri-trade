@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
 import { createChart, IChartApi } from "lightweight-charts";
+import React, { useEffect, useRef } from "react";
 
 interface PredictionChartProps {
   token: string;
@@ -12,8 +12,6 @@ const PredictionChart: React.FC<PredictionChartProps> = ({
 }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-
-  // Mock historical data
   const getHistoricalData = (token: string) => {
     const basePrice =
       {
@@ -22,58 +20,45 @@ const PredictionChart: React.FC<PredictionChartProps> = ({
         ETH: 3200,
         BONK: 0.00000068,
       }[token] || 100;
-
-    // Generate 30 days of historical data with some randomness
     const now = new Date();
     const data = [];
     for (let i = 30; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(now.getDate() - i);
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      date.setHours(i % 24);
 
-      // Add some randomness to create a realistic price chart
-      const randomFactor = 0.98 + Math.random() * 0.04; // Random between 0.98 and 1.02
-      const price = basePrice * randomFactor * (1 + (30 - i) * 0.005); // Slight uptrend
+      const randomFactor = 0.98 + Math.random() * 0.04;
+      const price = basePrice * randomFactor * (1 + (30 - i) * 0.005);
 
       data.push({
-        time: (date.getTime() / 1000) as number,
+        time: date.getTime(),
         value: price,
       });
     }
     return data;
   };
-
-  // Generate future prediction data
   const getPredictionData = (token: string, predictedPrice?: number) => {
     if (!predictedPrice) return [];
 
     const now = new Date();
     const data = [];
-
-    // Start from today
-    data.push({
-      time: (now.getTime() / 1000) as number,
-      value:
-        {
-          SOL: 150,
-          BTC: 65000,
-          ETH: 3200,
-          BONK: 0.00000068,
-        }[token] || 100,
-    });
-
-    // Add 7 days of prediction
-    for (let i = 1; i <= 7; i++) {
-      const date = new Date();
-      date.setDate(now.getDate() + i);
-
-      // Linear interpolation towards predicted price
-      const currentPrice: number = data[0].value;
+    const currentPrice =
+      {
+        SOL: 150,
+        BTC: 65000,
+        ETH: 3200,
+        BONK: 0.00000068,
+      }[token] || 100;
+    for (let i = 0; i <= 7; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + i);
+      date.setHours(i * 3);
       const progress = i / 7;
-      const interpolatedPrice: number =
+      const interpolatedPrice =
         currentPrice + (predictedPrice - currentPrice) * progress;
 
       data.push({
-        time: (date.getTime() / 1000) as number,
+        time: date.getTime(),
         value: interpolatedPrice,
       });
     }
@@ -84,7 +69,6 @@ const PredictionChart: React.FC<PredictionChartProps> = ({
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // Clear previous chart
     if (chartRef.current) {
       chartRef.current.remove();
       chartRef.current = null;
@@ -107,32 +91,32 @@ const PredictionChart: React.FC<PredictionChartProps> = ({
       },
     });
 
-    // Add historical line series
-    const historicalSeries = chart.addLineSeries({
-      color: "#3772FF",
+    const historicalSeries = chart.addAreaSeries({
+      topColor: "rgba(55, 114, 255, 0.56)",
+      bottomColor: "rgba(55, 114, 255, 0.04)",
+      lineColor: "#3772FF",
       lineWidth: 2,
     });
 
-    // Add prediction line series
-    const predictionSeries = chart.addLineSeries({
-      color: "#45B26B",
+    const predictionSeries = chart.addAreaSeries({
+      topColor: "rgba(69, 178, 107, 0.56)",
+      bottomColor: "rgba(69, 178, 107, 0.04)",
+      lineColor: "#45B26B",
       lineWidth: 2,
-      lineStyle: 1, // Dashed
+      lineStyle: 1,
     });
-
-    // Set data
     const historicalData = getHistoricalData(token);
     const predictionData = getPredictionData(token, predictedPrice);
 
     historicalSeries.setData(
-      historicalData.map((item) => ({
-        time: item.time.toString() as any,
+      historicalData.map((item, index) => ({
+        time: index as any,
         value: item.value,
       }))
     );
     predictionSeries.setData(
-      predictionData.map((item) => ({
-        time: item.time.toString() as any,
+      predictionData.map((item, index) => ({
+        time: (historicalData.length + index) as any,
         value: item.value,
       }))
     );
@@ -142,7 +126,6 @@ const PredictionChart: React.FC<PredictionChartProps> = ({
 
     chartRef.current = chart;
 
-    // Handle resize
     const handleResize = () => {
       if (chartRef.current && chartContainerRef.current) {
         chartRef.current.applyOptions({

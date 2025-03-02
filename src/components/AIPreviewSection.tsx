@@ -116,7 +116,6 @@ const AIPreviewSection: React.FC = () => {
           recommendations.
         </p>
 
-        {/* Feature Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mb-16">
           {aiFeatures.map((feature, index) => (
             <div
@@ -142,10 +141,8 @@ const AIPreviewSection: React.FC = () => {
           ))}
         </div>
 
-        {/* Feature Details */}
         <div className="w-full bg-[#1E1E1E] p-8 rounded-xl border border-[#333333] mb-16">
           <div className="flex flex-col md:flex-row gap-8">
-            {/* Left side - Feature details */}
             <div className="flex-1">
               <h3 className="text-[24px] font-bold text-white mb-6">
                 {aiFeatures[activeFeature].title} Details
@@ -195,7 +192,6 @@ const AIPreviewSection: React.FC = () => {
               </Link>
             </div>
 
-            {/* Right side - Visual representation */}
             <div className="flex-1">
               {activeFeature === 0 && (
                 <div className="bg-[#121212] p-6 rounded-xl border border-[#333333]">
@@ -205,18 +201,14 @@ const AIPreviewSection: React.FC = () => {
                     </div>
                     <div className="text-green-400 font-medium">+12.5%</div>
                   </div>
-
-                  {/* Price Prediction Chart */}
                   <div className="h-[200px] bg-[#0A0A0A] rounded-lg mb-4 overflow-hidden">
                     <svg viewBox="0 0 400 200" className="w-full h-full">
-                      {/* Historical Line */}
                       <path
                         d="M0,100 C30,90 60,110 90,80 C120,50 150,70 180,60"
                         fill="none"
                         stroke="#3772FF"
                         strokeWidth="2"
                       />
-                      {/* Prediction Line (dashed) */}
                       <path
                         d="M180,60 C210,50 240,40 270,30 C300,20 330,25 360,15"
                         fill="none"
@@ -224,7 +216,6 @@ const AIPreviewSection: React.FC = () => {
                         strokeWidth="2"
                         strokeDasharray="5,5"
                       />
-                      {/* Confidence interval */}
                       <path
                         d="M180,80 C210,70 240,60 270,50 C300,40 330,45 360,35"
                         fill="none"
@@ -241,7 +232,6 @@ const AIPreviewSection: React.FC = () => {
                         strokeOpacity="0.5"
                         strokeDasharray="3,3"
                       />
-                      {/* Area under prediction */}
                       <path
                         d="M180,60 C210,50 240,40 270,30 C300,20 330,25 360,15 L360,150 L180,150 Z"
                         fill="url(#green-gradient)"
@@ -288,8 +278,6 @@ const AIPreviewSection: React.FC = () => {
                     </div>
                     <div className="text-green-400 font-medium">Bullish</div>
                   </div>
-
-                  {/* Sentiment Gauge */}
                   <div className="flex justify-center my-6">
                     <div className="text-[72px]">😀</div>
                   </div>
@@ -327,19 +315,14 @@ const AIPreviewSection: React.FC = () => {
                       Recommendations
                     </div>
                   </div>
-
-                  {/* Risk Management Visualization */}
                   <div className="relative h-[200px] bg-[#0A0A0A] rounded-lg mb-4 overflow-hidden">
                     <svg viewBox="0 0 400 200" className="w-full h-full">
-                      {/* Price line */}
                       <path
                         d="M0,100 C50,120 100,80 150,90 C200,100 250,70 300,60 C350,50 400,70 400,40"
                         fill="none"
                         stroke="#3772FF"
                         strokeWidth="2"
                       />
-
-                      {/* Stop loss line */}
                       <line
                         x1="0"
                         y1="140"
@@ -349,8 +332,6 @@ const AIPreviewSection: React.FC = () => {
                         strokeWidth="2"
                         strokeDasharray="4,4"
                       />
-
-                      {/* Take profit line */}
                       <line
                         x1="0"
                         y1="30"
@@ -360,11 +341,7 @@ const AIPreviewSection: React.FC = () => {
                         strokeWidth="2"
                         strokeDasharray="4,4"
                       />
-
-                      {/* Current price marker */}
                       <circle cx="400" cy="40" r="5" fill="#3772FF" />
-
-                      {/* Labels */}
                       <text x="10" y="35" fill="#45B26B" fontSize="12">
                         Take Profit ($172.50)
                       </text>
@@ -408,8 +385,6 @@ const AIPreviewSection: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Testimonial */}
         <div className="w-full max-w-4xl bg-gradient-to-r from-blue-900/30 to-purple-900/30 p-8 rounded-2xl border border-blue-500/20">
           <div className="flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">

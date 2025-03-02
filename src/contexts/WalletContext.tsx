@@ -19,7 +19,6 @@ import {
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-// Import wallet adapter CSS
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 interface WalletContextType {
@@ -40,7 +39,6 @@ export const useWallet = () => {
   return context;
 };
 
-// Inner provider that uses the Solana wallet adapter
 const InnerWalletProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -66,7 +64,6 @@ const InnerWalletProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     fetchBalance();
-    // Set up an interval to refresh the balance
     const intervalId = setInterval(fetchBalance, 30000);
 
     return () => clearInterval(intervalId);
@@ -100,16 +97,11 @@ const InnerWalletProvider: React.FC<{ children: ReactNode }> = ({
     </WalletContext.Provider>
   );
 };
-
-// Outer provider that sets up the Solana wallet adapter
 export const WalletProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  // Set up the network
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = clusterApiUrl(network);
-
-  // Set up the wallet adapters
   const wallets = [
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter({ network }),

@@ -15,8 +15,6 @@ const HomePage: React.FC = () => {
       <Hero />
       <FeaturesSection />
       <AIPreviewSection />
-
-      {/* Call to Action Section */}
       <section className="max-container padding-x py-16">
         <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 p-10 rounded-2xl border border-blue-500/20">
           <div className="flex flex-col items-center text-center">

@@ -18,21 +18,18 @@ const SentimentAnalysis: React.FC<SentimentAnalysisProps> = ({ sentiment }) => {
 
   const { score, label } = sentiment;
 
-  // Determine color based on sentiment
   const getColor = () => {
     if (label === "positive") return "#45B26B";
     if (label === "negative") return "#EF466F";
     return "#FFB800";
   };
 
-  // Get emoji based on sentiment
   const getEmoji = () => {
     if (label === "positive") return "😀";
     if (label === "negative") return "😞";
     return "😐";
   };
 
-  // Get description based on score
   const getDescription = () => {
     if (score > 0.7)
       return "Very positive sentiment indicates strong bullish signals.";
@@ -45,7 +42,6 @@ const SentimentAnalysis: React.FC<SentimentAnalysisProps> = ({ sentiment }) => {
     return "Very negative sentiment indicates strong bearish signals.";
   };
 
-  // Calculate percentage for the gauge
   const percentage = score * 100;
 
   return (

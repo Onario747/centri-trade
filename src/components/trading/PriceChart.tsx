@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useRef } from "react";
 import { createChart, IChartApi, UTCTimestamp } from "lightweight-charts";
 
@@ -16,6 +17,72 @@ interface CandleData {
   close: number;
 }
 
+// Mock Data Generator
+const generateMockPriceData = (
+  token: string,
+  timeframe: string
+): CandleData[] => {
+  // Base prices for different tokens
+  const basePrices = {
+    SOL: 150,
+    BTC: 65000,
+    ETH: 3200,
+    BONK: 0.00000068,
+  };
+
+  const basePrice = basePrices[token as keyof typeof basePrices] || 100;
+  const now = new Date();
+  const candles: CandleData[] = [];
+  let numCandles = 50;
+  let intervalMinutes = 60;
+
+  switch (timeframe) {
+    case "1h":
+      numCandles = 24;
+      intervalMinutes = 5;
+      break;
+    case "1d":
+      numCandles = 24;
+      intervalMinutes = 60;
+      break;
+    case "1w":
+      numCandles = 7;
+      intervalMinutes = 24 * 60;
+      break;
+    case "1m":
+      numCandles = 30;
+      intervalMinutes = 24 * 60;
+      break;
+  }
+
+  let lastPrice = basePrice;
+  let trend = 0.5; 
+  const startDate = new Date(now);
+  startDate.setMinutes(startDate.getMinutes() - numCandles * intervalMinutes);
+
+  for (let i = 0; i < numCandles; i++) {
+    const time = i as UTCTimestamp;
+    trend = trend * 0.95 + Math.random() * 0.1;
+    const movement = (Math.random() - 0.5 + trend) * 0.02;
+    const open = lastPrice;
+    const close = open * (1 + movement);
+    const high = Math.max(open, close) * (1 + Math.random() * 0.01);
+    const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+
+    candles.push({
+      time,
+      open,
+      high,
+      low,
+      close,
+    });
+
+    lastPrice = close;
+  }
+
+  return candles;
+};
+
 const PriceChart: React.FC<PriceChartProps> = ({ pair }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -24,8 +91,8 @@ const PriceChart: React.FC<PriceChartProps> = ({ pair }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [useMockData, setUseMockData] = useState(false);
 
-  // Map our token symbols to CoinGecko IDs
   const tokenIdMap: Record<string, string> = {
     SOL: "solana",
     BTC: "bitcoin",
@@ -34,98 +101,94 @@ const PriceChart: React.FC<PriceChartProps> = ({ pair }) => {
     USDC: "usd-coin",
   };
 
+  const toggleMockData = () => {
+    setUseMockData((prev) => !prev);
+    setLoading(true);
+    setError(null);
+  };
+
   useEffect(() => {
     const fetchPriceData = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const fromId = tokenIdMap[pair.from];
-        if (!fromId) {
-          throw new Error(`Unsupported token: ${pair.from}`);
-        }
-
-        // Determine days and interval based on timeframe
-        let days = 1;
-        switch (timeframe) {
-          case "1h":
-            days = 1;
-            break;
-          case "1d":
-            days = 7;
-            break;
-          case "1w":
-            days = 30;
-            break;
-          case "1m":
-            days = 90;
-            break;
-        }
-
-        // Fetch market data from CoinGecko
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${fromId}/market_chart?vs_currency=usd&days=${days}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch price data");
-        }
-
-        const data = await response.json();
-
-        // Process price data
-        const prices = data.prices;
-        if (!prices || !prices.length) {
-          throw new Error("No price data available");
-        }
-
-        // Set current price
-        setCurrentPrice(prices[prices.length - 1][1]);
-
-        // Convert to candle data format
-        // For simplicity, we'll create candles from the price points
-        // In a real app, you'd fetch OHLC data directly
-        const candles: CandleData[] = [];
-        const interval = Math.floor(prices.length / 50); // Create ~50 candles
-
-        for (let i = 0; i < prices.length; i += interval) {
-          const chunk = prices.slice(i, i + interval);
-          if (chunk.length > 0) {
-            const openTime = chunk[0][0];
-            const open = chunk[0][1];
-            const close = chunk[chunk.length - 1][1];
-            const priceValues = chunk.map((p: any) => p[1]);
-            const high = Math.max(...priceValues);
-            const low = Math.min(...priceValues);
-
-            candles.push({
-              time: (openTime / 1000) as UTCTimestamp,
-              open,
-              high,
-              low,
-              close,
-            });
+        if (useMockData) {
+          const mockCandles = generateMockPriceData(pair.from, timeframe);
+          setPriceData(mockCandles);
+          setCurrentPrice(mockCandles[mockCandles.length - 1].close);
+        } else {
+          const fromId = tokenIdMap[pair.from];
+          if (!fromId) {
+            throw new Error(`Unsupported token: ${pair.from}`);
           }
-        }
 
-        setPriceData(candles);
+          let days = 1;
+          switch (timeframe) {
+            case "1h":
+              days = 1;
+              break;
+            case "1d":
+              days = 7;
+              break;
+            case "1w":
+              days = 30;
+              break;
+            case "1m":
+              days = 90;
+              break;
+          }
+
+          const response = await fetch(
+            `https://api.coingecko.com/api/v3/coins/${fromId}/market_chart?vs_currency=usd&days=${days}`
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch price data");
+          }
+
+          const data = await response.json();
+
+          const prices = data.prices;
+          if (!prices || !prices.length) {
+            throw new Error("No price data available");
+          }
+          setCurrentPrice(prices[prices.length - 1][1]);
+          const candles: CandleData[] = [];
+          const interval = Math.floor(prices.length / 50); 
+
+          for (let i = 0; i < prices.length; i += interval) {
+            const chunk = prices.slice(i, i + interval);
+            if (chunk.length > 0) {
+              const openTime = chunk[0][0];
+              const open = chunk[0][1];
+              const close = chunk[chunk.length - 1][1];
+              const priceValues = chunk.map((p: any) => p[1]);
+              const high = Math.max(...priceValues);
+              const low = Math.min(...priceValues);
+
+              candles.push({
+                time: (openTime / 1000) as UTCTimestamp,
+                open,
+                high,
+                low,
+                close,
+              });
+            }
+          }
+
+          setPriceData(candles);
+        }
       } catch (err) {
-        console.error("Error fetching price data:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch price data"
-        );
+        console.error("Error with price data:", err);
+        setError("Failed to load price data. Try switching to Demo Mode.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchPriceData();
-
-    // Set up polling for real-time updates
-    const intervalId = setInterval(fetchPriceData, 60000); // Update every minute
-
-    return () => clearInterval(intervalId);
-  }, [pair.from, timeframe, tokenIdMap]);
+  }, [pair.from, pair.to, timeframe, useMockData, tokenIdMap]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -188,7 +251,7 @@ const PriceChart: React.FC<PriceChartProps> = ({ pair }) => {
         chartRef.current = null;
       }
     };
-  }, [priceData]);
+  }, [pair.from, pair.to, timeframe, priceData]);
 
   return (
     <div className="bg-[#1E1E1E] p-6 rounded-xl">
@@ -197,11 +260,26 @@ const PriceChart: React.FC<PriceChartProps> = ({ pair }) => {
           {pair.from}/{pair.to} Chart
         </h2>
 
-        {currentPrice && (
-          <div className="text-white text-xl font-medium">
-            ${currentPrice.toFixed(2)}
-          </div>
-        )}
+        <div className="flex gap-2">
+          {/* Add Mock Data Toggle */}
+          <button
+            type="button"
+            onClick={toggleMockData}
+            className={`px-3 py-1 rounded-md text-sm ${
+              useMockData
+                ? "bg-purple-600 text-white"
+                : "bg-gray-700 text-gray-300"
+            }`}
+          >
+            {useMockData ? "Demo Data: ON" : "Demo Data: OFF"}
+          </button>
+
+          {currentPrice && (
+            <div className="text-white text-xl font-medium">
+              ${currentPrice.toFixed(2)}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex mb-4 space-x-2">
