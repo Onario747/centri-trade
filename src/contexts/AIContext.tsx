@@ -48,7 +48,7 @@ const CORS_PROXY = "https://corsproxy.io/?";
 
 const HF_API_URL =
   "https://api-inference.huggingface.co/models/ProsusAI/finbert";
-const HF_API_TOKEN = "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";
+const HF_API_TOKEN = import.meta.env.VITE_HF_API_TOKEN;
 
 const USE_MOCK_DATA = false;
 
