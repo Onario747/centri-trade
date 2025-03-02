@@ -1,54 +1,78 @@
-# React + TypeScript + Vite
+# Advanced Trading Platform on Jupiter with AI Integration
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
 
-Currently, two official plugins are available:
+This project is an advanced trading platform built on Solana using Jupiter's Swap API, enhanced with AI-powered features. The platform supports **limit orders**, **stop loss**, **take profit**, and integrates AI for **predictive price analysis**, **sentiment analysis**, **risk management**, and **automated trading strategies**. Historical and real-time price data is fetched from **CoinGecko API**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+### Core Trading Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Limit Orders
+- Stop Loss Orders
+- Take Profit Orders
+- Order History Tracking
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+### AI-Powered Features
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- Predictive Price Analysis
+- Market Sentiment Analysis
+- Risk Management Recommendations
+- Automated Trading Bots
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### User Interface
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+- Wallet Integration (Phantom, Solflare)
+- Real-Time Price Charts (TradingView)
+- AI Insights Dashboard
+
+## Technical Stack
+
+- **Frontend**: Reactjs + Solana Wallet Adapter + TradingView Lightweight Charts
+- **Backend**: Supabase + CoinGecko API
+- **AI/ML**: TensorFlow, PyTorch, Hugging Face Transformers
+- **Security**: HTTPS, encrypted database, rate limiting
+
+## AI Integration Details
+
+### Predictive Price Analysis
+
+- Uses LSTM (Long Short-Term Memory) for time-series forecasting
+- Trained on CoinGecko historical price data
+- Implements MinMaxScaler for data normalization
+
+### Sentiment Analysis
+
+- Utilizes fine-tuned BERT model
+- Processes data from Twitter and Reddit APIs
+- Returns sentiment classification (Positive/Negative)
+
+### Risk Management
+
+- Implements Reinforcement Learning (PPO)
+- Optimizes stop-loss and take-profit levels
+- Based on portfolio and volatility analysis
+
+## User Guide
+
+### Basic Operations
+
+1. Connect wallet (Phantom or Solflare)
+2. Select token pair
+3. Choose order type
+4. Enter price and amount
+
+### AI Features
+
+- View price predictions in AI Dashboard
+- Monitor market sentiment
+- Follow risk recommendations
+- Configure trading bots
+
+## Quality Assurance
+
+- Code follows ESLint/Prettier (frontend) and PEP8 (backend) guidelines
+- Comprehensive testing for AI models
+- Optimized UI/UX with smooth interactions
+- Clear visualization of AI insights
+
