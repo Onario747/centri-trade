@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+
+
+@layer components {
+  .max-container {
+    @apply w-full max-w-[1440px] mx-auto px-4 md:px-8;
+  }
+
+  .padding-x {
+    @apply lg:px-[4rem] md:px-[1.8rem] px-[0.8rem];
+  }
+}
