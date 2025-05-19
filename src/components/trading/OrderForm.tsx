@@ -4,8 +4,8 @@ import JSBI from "jsbi";
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useWallet } from "../../contexts/WalletContext";
 
-// Updated RouteInfo interface with all required properties
-interface RouteInfo {
+// Define our own mock route shape that matches what we need
+interface MockRouteInfo {
   marketInfos: {
     amm: {
       label: string;
@@ -47,7 +47,7 @@ const TOKEN_DECIMALS: Record<string, number> = {
 };
 
 // Add this mock data near your token constants
-const MOCK_ROUTES = {
+const MOCK_ROUTES: Record<string, MockRouteInfo[]> = {
   "SOL/USDC": [
     {
       marketInfos: [{ amm: { label: "Orca" } }, { amm: { label: "Raydium" } }],
@@ -84,6 +84,7 @@ const MOCK_ROUTES = {
       slippageBps: 50,
       swapMode: 1,
       priceImpactPct: 0.08,
+      amount: JSBI.BigInt(100000000), // Same as inAmount
     },
   ],
   "BONK/SOL": [
@@ -95,6 +96,7 @@ const MOCK_ROUTES = {
       slippageBps: 50,
       swapMode: 1,
       priceImpactPct: 0.25,
+      amount: JSBI.BigInt(10000000), // Same as inAmount
     },
   ],
 };
@@ -106,8 +108,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
   >("market");
   const [amount, setAmount] = useState("");
   const [slippage, setSlippage] = useState("1");
-  const [routes, setRoutes] = useState<RouteInfo[]>([]);
-  const [selectedRoute, setSelectedRoute] = useState<RouteInfo | null>(null);
+  const [routes, setRoutes] = useState<MockRouteInfo[]>([]);
+  const [selectedRoute, setSelectedRoute] = useState<MockRouteInfo | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -131,7 +135,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
   const {
     exchange,
     loading: jupiterLoading,
-    error: jupiterError,
     refresh,
     routes: jupiterRoutes,
   } = useJupiter({
@@ -200,9 +203,25 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
 
       setRoutes(routesWithAmount);
       setSelectedRoute(routesWithAmount[0] || null);
-    } else if (jupiterRoutes) {
-      setRoutes(jupiterRoutes);
-      setSelectedRoute(jupiterRoutes[0] || null);
+    } else if (jupiterRoutes && jupiterRoutes.length > 0) {
+      // Convert Jupiter routes to our format
+      const convertedRoutes = jupiterRoutes.map((route) => {
+        return {
+          marketInfos: route.marketInfos.map(() => ({
+            amm: { label: "Unknown" },
+          })),
+          inAmount: route.inAmount,
+          outAmount: route.outAmount,
+          otherAmountThreshold: route.otherAmountThreshold,
+          slippageBps: route.slippageBps,
+          swapMode: route.swapMode as unknown as number,
+          priceImpactPct: route.priceImpactPct,
+          amount: route.amount,
+        } as MockRouteInfo;
+      });
+
+      setRoutes(convertedRoutes);
+      setSelectedRoute(convertedRoutes[0] || null);
     }
   }, [jupiterRoutes, pair.from, pair.to, useMockData]);
 
@@ -239,8 +258,21 @@ const OrderForm: React.FC<OrderFormProps> = ({ pair, onPairChange }) => {
         await new Promise((resolve) => setTimeout(resolve, 1500));
         return true;
       } else {
+        // Find the matching Jupiter route with the same properties
+        const matchingJupiterRoute = jupiterRoutes?.find(
+          (r) =>
+            JSBI.EQ(r.inAmount, selectedRoute.inAmount) &&
+            JSBI.EQ(r.outAmount, selectedRoute.outAmount)
+        );
+
+        if (!matchingJupiterRoute) {
+          throw new Error(
+            "Could not find matching route. Please refresh and try again."
+          );
+        }
+
         const swapResult = await exchange({
-          routeInfo: selectedRoute as RouteInfo,
+          routeInfo: matchingJupiterRoute,
           userPublicKey: new PublicKey(publicKey!),
         });
         if ("error" in swapResult && swapResult.error) {
